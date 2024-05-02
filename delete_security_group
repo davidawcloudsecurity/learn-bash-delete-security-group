@@ -13,6 +13,15 @@ remove_rules_and_delete_sg() {
     aws ec2 revoke-security-group-egress --group-id "$security_group_id" --protocol all --port all --source-group "$source_security_group_id"
     aws ec2 revoke-security-group-egress --group-id "$security_group_id" --protocol all --port all --source-group "$destination_security_group_id"
 
+    local port="2049"
+    echo "Removing inbound rule referencing source security group $source_security_group_id..."
+    aws ec2 revoke-security-group-ingress --group-id "$security_group_id" --protocol tcp --port $port --source-group "$source_security_group_id"
+    aws ec2 revoke-security-group-ingress --group-id "$security_group_id" --protocol tcp --port $port --source-group "$destination_security_group_id"
+    echo "Removing outbound rule referencing source security group $source_security_group_id..."
+    aws ec2 revoke-security-group-egress --group-id "$security_group_id" --protocol tcp --port $port --source-group "$source_security_group_id"
+    aws ec2 revoke-security-group-egress --group-id "$security_group_id" --protocol tcp --port $port --source-group "$destination_security_group_id"
+
+
     echo "Deleting security group $security_group_id..."
     aws ec2 delete-security-group --group-id "$security_group_id"
 }
