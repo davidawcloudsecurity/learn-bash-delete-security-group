@@ -5,11 +5,13 @@ remove_rules_and_delete_sg() {
     local security_group_id=$1
 #    local source_security_group_id=$2
     local source_security_group_id=$(aws ec2 describe-security-groups --group-id "$security_group_id" | jq -r '.SecurityGroups[].IpPermissions[].UserIdGroupPairs[].GroupId')
+    local destination_security_group_id=$(aws ec2 describe-security-groups --group-id "$security_group_id" | jq -r '.SecurityGroups[].IpPermissionsEgress[].UserIdGroupPairs[].GroupId')
     echo "Removing inbound rule referencing source security group $source_security_group_id..."
     aws ec2 revoke-security-group-ingress --group-id "$security_group_id" --protocol all --port all --source-group "$source_security_group_id"
-
+    aws ec2 revoke-security-group-ingress --group-id "$security_group_id" --protocol all --port all --source-group "$destination_security_group_id"
     echo "Removing outbound rule referencing source security group $source_security_group_id..."
     aws ec2 revoke-security-group-egress --group-id "$security_group_id" --protocol all --port all --source-group "$source_security_group_id"
+    aws ec2 revoke-security-group-egress --group-id "$security_group_id" --protocol all --port all --source-group "$destination_security_group_id"
 
     echo "Deleting security group $security_group_id..."
     aws ec2 delete-security-group --group-id "$security_group_id"
